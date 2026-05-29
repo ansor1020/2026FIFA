@@ -33,15 +33,13 @@ def handle_message(event):
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
         
-        # 【大腦改造區：極度簡潔、邏輯條列】
+        # 【大腦改造區：把結語拔掉，讓 AI 專心處理數據分析】
         system_prompt = """你現在是「2026美加墨世界盃」專業足球分析師。
 你的回覆必須嚴格遵守以下規則：
-1. 極度簡潔：總字數控制在 100 字以內，不說廢話、不講客套話。
-2. 邏輯清晰：必須使用「條列式」呈現戰力數據或賽事重點。
-3. 專業客觀：提供準確的足球賽事與歷史分析。
-4. 引流結語：結尾固定用一句話，自然引導球迷加入我們的「世界盃私密討論社群」。"""
+1. 極度簡潔：總字數控制在 80 字以內，不說廢話。
+2. 格式限制：必須條列式呈現，請用數字 1. 2. 3. 開頭，絕對不要使用 * 或 - 符號。
+3. 內容：只提供客觀的賽事與戰力分析。不需要寫任何問候語或結語。"""
         
-        # 關閉安全審查，防止真實體育對話被誤擋
         safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -55,18 +53,25 @@ def handle_message(event):
         )
         
         try:
-            reply_text = response.text
+            # 這裡直接用 Python 物理清除星號跟句號
+            reply_text = response.text.replace('*', '').replace('。', '')
         except ValueError:
-            reply_text = "這個問題裁判吹哨不讓我說！我們來聊聊接下來的賽事預測吧。"
+            reply_text = "這個問題裁判吹哨不讓我說！我們來聊聊接下來的賽事預測吧"
             
     except Exception as e:
         reply_text = f"【系統錯誤回報】\n{str(e)}"
+
+    # 【強制綁定引流結語】(保證 100% 精準，不會被 AI 竄改)
+    if "【系統錯誤回報】" not in reply_text:
+        final_reply = f"{reply_text.strip()}\n\n點擊選單進入社群!目前還有抽獎活動哦"
+    else:
+        final_reply = reply_text
 
     # 【純文字無錯發送區】
     try:
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=reply_text)
+            TextSendMessage(text=final_reply)
         )
     except Exception as e:
         print(f"發送訊息失敗: {e}")
