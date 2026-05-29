@@ -32,7 +32,7 @@ def handle_message(event):
     
     try:
         # 恢復標準模型寫法
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         system_prompt = """你現在是「2026美加墨世界盃聊天社群」的專屬 AI 助理。
 你的任務是：
